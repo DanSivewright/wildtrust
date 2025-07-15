@@ -72,6 +72,7 @@ export interface Config {
     media: Media;
     categories: Category;
     users: User;
+    locations: Location;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -88,6 +89,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -736,6 +738,104 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: string;
+  /**
+   * The main title for this location point
+   */
+  title: string;
+  /**
+   * The specific name of the location (e.g., "Cape Point", "Robben Island")
+   */
+  locationName: string;
+  /**
+   * Detailed description of this location and its significance
+   */
+  description: string;
+  /**
+   * The exact coordinates of this location on the map
+   */
+  coordinates: {
+    /**
+     * Latitude coordinate (e.g., -33.9249 for Cape Town)
+     */
+    latitude: number;
+    /**
+     * Longitude coordinate (e.g., 18.4241 for Cape Town)
+     */
+    longitude: number;
+  };
+  /**
+   * The type of location this represents
+   */
+  category:
+    | 'marine-protected-area'
+    | 'wildlife-sanctuary'
+    | 'conservation-area'
+    | 'research-station'
+    | 'tourist-attraction'
+    | 'historical-site'
+    | 'beach'
+    | 'harbor'
+    | 'other';
+  /**
+   * The current status of this location
+   */
+  status: 'active' | 'under-development' | 'closed' | 'seasonal';
+  /**
+   * Optional contact information for this location
+   */
+  contactInfo?: {
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
+  };
+  /**
+   * Additional details about this location
+   */
+  additionalInfo?: {
+    /**
+     * e.g., "Daily 8:00 AM - 6:00 PM" or "By appointment only"
+     */
+    operatingHours?: string | null;
+    /**
+     * e.g., "Free", "R50 per person", "Donation suggested"
+     */
+    entranceFee?: string | null;
+    /**
+     * e.g., "Early morning for wildlife viewing", "Low tide for beach access"
+     */
+    bestTimeToVisit?: string | null;
+  };
+  /**
+   * Images related to this location
+   */
+  images?:
+    | {
+        image: string | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Tags to help categorize and search for this location
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -926,6 +1026,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'locations';
+        value: string | Location;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1290,6 +1394,55 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations_select".
+ */
+export interface LocationsSelect<T extends boolean = true> {
+  title?: T;
+  locationName?: T;
+  description?: T;
+  coordinates?:
+    | T
+    | {
+        latitude?: T;
+        longitude?: T;
+      };
+  category?: T;
+  status?: T;
+  contactInfo?:
+    | T
+    | {
+        phone?: T;
+        email?: T;
+        website?: T;
+      };
+  additionalInfo?:
+    | T
+    | {
+        operatingHours?: T;
+        entranceFee?: T;
+        bestTimeToVisit?: T;
+      };
+  images?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  publishedAt?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
