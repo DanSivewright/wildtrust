@@ -202,25 +202,23 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
   }
 
   const points = locations?.docs?.map((location) => ({
-    type: 'Feature',
+    type: 'Feature' as const,
     properties: {
-      id: location.id,
-      title: location.title,
-      locationName: location.locationName,
-      category: location.category,
-      status: location.status,
+      ...location,
     },
     geometry: {
-      type: 'Point',
+      type: 'Point' as const,
       coordinates: [location.coordinates.longitude, location.coordinates.latitude],
     },
   }))
 
   const bounds = mapRef.current
-    ? mapRef.current.getMap()?.getBounds()?.toArray().flat()
+    ? (mapRef.current.getMap()?.getBounds()?.toArray().flat() as
+        | [number, number, number, number]
+        | undefined)
     : defaultBounds
-      ? defaultBounds
-      : null
+      ? (defaultBounds as [number, number, number, number])
+      : undefined
 
   const { clusters, supercluster } = useSupercluster({
     points,
