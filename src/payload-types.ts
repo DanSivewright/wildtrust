@@ -829,6 +829,18 @@ export interface Location {
       }[]
     | null;
   publishedAt?: string | null;
+  polygon?:
+    | {
+        coordinates?:
+          | {
+              latitude: number;
+              longitude: number;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   slug?: string | null;
   slugLock?: boolean | null;
   updatedAt: string;
@@ -1439,6 +1451,18 @@ export interface LocationsSelect<T extends boolean = true> {
         id?: T;
       };
   publishedAt?: T;
+  polygon?:
+    | T
+    | {
+        coordinates?:
+          | T
+          | {
+              latitude?: T;
+              longitude?: T;
+              id?: T;
+            };
+        id?: T;
+      };
   slug?: T;
   slugLock?: T;
   updatedAt?: T;

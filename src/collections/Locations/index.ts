@@ -266,6 +266,29 @@ export const Locations: CollectionConfig = {
         ],
       },
     },
+    {
+      name: 'polygon',
+      type: 'array',
+      label: 'Area Polygon',
+      fields: [
+        {
+          name: 'coordinates',
+          type: 'array',
+          fields: [
+            {
+              name: 'latitude',
+              type: 'number',
+              required: true,
+            },
+            {
+              name: 'longitude',
+              type: 'number',
+              required: true,
+            },
+          ],
+        },
+      ],
+    },
     ...slugField(),
   ],
 }
