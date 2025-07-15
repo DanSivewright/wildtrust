@@ -117,7 +117,7 @@ const DrawControl: React.FC = () => {
 
 const LocationsMap: React.FC<Props> = ({ locations }) => {
   const mapRef = useRef<MapRef>(null)
-  const [bounds, setBounds] = useState<number[] | null>(null)
+  const [defaultBounds, setDefaultBounds] = useState<number[] | null>(null)
   const [{ markers, polygons, ...viewState }, setSearchParams] = useQueryStates(mapSearchParams)
 
   // Create GeoJSON data for selected polygons
@@ -216,19 +216,14 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
     },
   }))
 
-  useEffect(() => {
-    if (mapRef.current) {
-      console.log('triggered:::')
-      const map = mapRef.current.getMap()
-      if (map) {
-        setBounds(map.getBounds()?.toArray().flat() || null)
-      }
-    }
-  }, [mapRef.current])
+  const bounds = mapRef.current
+    ? mapRef.current.getMap()?.getBounds()?.toArray().flat()
+    : defaultBounds
+      ? defaultBounds
+      : null
+
   const { clusters, supercluster } = useSupercluster({
-    // @ts-ignore
     points,
-    // @ts-ignore
     bounds,
     zoom: viewState.zoom,
     options: {
@@ -243,7 +238,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN!}
         initialViewState={viewState}
         onLoad={() => {
-          setBounds(mapRef.current?.getMap()?.getBounds()?.toArray().flat() || null)
+          setDefaultBounds(mapRef.current?.getMap()?.getBounds()?.toArray().flat() || null)
         }}
         onMove={(e) => {
           setSearchParams(
@@ -281,8 +276,13 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
 
           if (isCluster) {
             return (
-              <Marker key={`cluster-${cluster.id}`} latitude={latitude} longitude={longitude}>
-                <Badge
+              <Marker
+                key={`cluster-${cluster.id}`}
+                latitude={latitude}
+                longitude={longitude}
+                anchor="right"
+              >
+                <button
                   onClick={() => {
                     const expansionZoom = Math.min(
                       // @ts-ignore
@@ -294,9 +294,10 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                       zoom: expansionZoom,
                     })
                   }}
+                  className="bg-background px-3 py-1 rounded-full"
                 >
-                  {pointCount}: Spaces
-                </Badge>
+                  {pointCount}: Locations
+                </button>
               </Marker>
             )
           }
@@ -305,6 +306,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
               key={`cluster-${cluster.properties.id}`}
               latitude={latitude}
               longitude={longitude}
+              anchor="right"
             >
               <button className="bg-background px-3 py-1 rounded-full">
                 {cluster.properties.title}
