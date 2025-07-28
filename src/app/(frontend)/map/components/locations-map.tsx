@@ -562,7 +562,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                           zoom: expansionZoom,
                         })
                       }}
-                      className="bg-foreground px-3 py-1 rounded-full"
+                      className="bg-foreground text-black px-3 py-1 rounded-full"
                     >
                       {pointCount}: Locations
                     </button>
@@ -577,7 +577,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                   anchor="right"
                 >
                   <button
-                    className="bg-primary px-3 py-1 rounded-full hover:bg-primary/80 transition-colors"
+                    className="bg-primary px-3 py-1 text-black rounded-full hover:bg-primary/80 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation()
                       setSearchParams({ selectedLocationId: cluster.properties.id })
@@ -619,6 +619,30 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                       <strong>Status:</strong> {selectedLocation.status}
                     </p>
                   )}
+
+                  {/* Render links from additional information */}
+                  {selectedLocation.additionalInfo?.links &&
+                    selectedLocation.additionalInfo.links.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-semibold text-gray-900 mb-2">Links:</p>
+                        <div className="space-y-1">
+                          {selectedLocation.additionalInfo.links.map(
+                            (linkItem, index) =>
+                              linkItem.link && (
+                                <a
+                                  key={index}
+                                  href={linkItem.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block text-sm text-blue-600 hover:text-blue-800 underline break-all"
+                                >
+                                  {linkItem.link}
+                                </a>
+                              ),
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                   {/* {selectedLocation.description && (
                     <p className="text-sm text-gray-700 mb-3">{selectedLocation.description}</p>

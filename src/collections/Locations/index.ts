@@ -12,8 +12,8 @@ export const Locations: CollectionConfig = {
     update: authenticated,
   },
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'locationName', 'updatedAt'],
+    useAsTitle: 'locationName',
+    defaultColumns: ['locationName', 'updatedAt'],
   },
   fields: [
     {
@@ -143,6 +143,18 @@ export const Locations: CollectionConfig = {
           admin: {
             description: 'e.g., "Early morning for wildlife viewing", "Low tide for beach access"',
           },
+        },
+        {
+          name: 'links',
+          type: 'array',
+          label: 'Links',
+          fields: [
+            {
+              name: 'link',
+              type: 'text',
+              label: 'Link',
+            },
+          ],
         },
       ],
     },

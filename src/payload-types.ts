@@ -793,6 +793,12 @@ export interface Location {
      * e.g., "Early morning for wildlife viewing", "Low tide for beach access"
      */
     bestTimeToVisit?: string | null;
+    links?:
+      | {
+          link?: string | null;
+          id?: string | null;
+        }[]
+      | null;
   };
   /**
    * Images related to this location
@@ -1421,6 +1427,12 @@ export interface LocationsSelect<T extends boolean = true> {
         operatingHours?: T;
         entranceFee?: T;
         bestTimeToVisit?: T;
+        links?:
+          | T
+          | {
+              link?: T;
+              id?: T;
+            };
       };
   images?:
     | T
