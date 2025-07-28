@@ -12,6 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { Suspense } from 'react'
 
 type Props = {}
 const Map: React.FC<Props> = async ({}) => {
@@ -143,16 +144,18 @@ const Map: React.FC<Props> = async ({}) => {
   //   },
   // })
   return (
-    <SidebarProvider
-      data-theme="dark"
-      style={
-        {
-          '--sidebar-width': '30rem',
-        } as React.CSSProperties
-      }
-    >
-      <LocationsMap locations={locations} />
-    </SidebarProvider>
+    <Suspense>
+      <SidebarProvider
+        data-theme="dark"
+        style={
+          {
+            '--sidebar-width': '30rem',
+          } as React.CSSProperties
+        }
+      >
+        <LocationsMap locations={locations} />
+      </SidebarProvider>
+    </Suspense>
   )
 }
 export default Map
