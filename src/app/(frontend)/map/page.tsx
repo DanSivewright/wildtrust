@@ -2,7 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import LocationsMap from './components/locations-map'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import LocationsSidebar from './components/locations-sidebar'
+
 import { Separator } from '@/components/ui/separator'
 import {
   Breadcrumb,
@@ -18,6 +18,7 @@ const Map: React.FC<Props> = async ({}) => {
   const payload = await getPayload({ config: configPromise })
   const locations = await payload.find({
     collection: 'locations',
+    limit: 100,
   })
 
   // async function updateGeometry() {
@@ -127,6 +128,20 @@ const Map: React.FC<Props> = async ({}) => {
   //   },
   // })
 
+  // await payload.update({
+  //   collection: 'locations',
+  //   id: '6887122bb7087a7087d43de6',
+  //   data: {
+  //     polygon: data?.features?.[0]?.geometry?.coordinates?.[0]?.map((coord) => ({
+  //       coordinates: [
+  //         {
+  //           latitude: coord[1],
+  //           longitude: coord[0],
+  //         },
+  //       ],
+  //     })),
+  //   },
+  // })
   return (
     <SidebarProvider
       data-theme="dark"
@@ -141,3 +156,25 @@ const Map: React.FC<Props> = async ({}) => {
   )
 }
 export default Map
+
+const data = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      id: 'mPwGf5IWv7uYBmHpK0JUvpgesXpQdDZR',
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        coordinates: [
+          [
+            [12.730472723208294, -29.90187766877493],
+            [12.722534942408174, -31.197821329905885],
+            [12.210263816190576, -30.359530305464702],
+            [12.730472723208294, -29.90187766877493],
+          ],
+        ],
+        type: 'Polygon',
+      },
+    },
+  ],
+}

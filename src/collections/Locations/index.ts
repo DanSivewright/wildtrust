@@ -76,80 +76,16 @@ export const Locations: CollectionConfig = {
       ],
     },
     {
-      name: 'category',
-      type: 'select',
+      name: 'authorisations',
+      type: 'text',
       required: true,
-      label: 'Category',
-      admin: {
-        description: 'The type of location this represents',
-      },
-      options: [
-        {
-          label: 'Marine Protected Area',
-          value: 'marine-protected-area',
-        },
-        {
-          label: 'Wildlife Sanctuary',
-          value: 'wildlife-sanctuary',
-        },
-        {
-          label: 'Conservation Area',
-          value: 'conservation-area',
-        },
-        {
-          label: 'Research Station',
-          value: 'research-station',
-        },
-        {
-          label: 'Tourist Attraction',
-          value: 'tourist-attraction',
-        },
-        {
-          label: 'Historical Site',
-          value: 'historical-site',
-        },
-        {
-          label: 'Beach',
-          value: 'beach',
-        },
-        {
-          label: 'Harbor',
-          value: 'harbor',
-        },
-        {
-          label: 'Other',
-          value: 'other',
-        },
-      ],
-      defaultValue: 'other',
+      label: 'Authorisations',
     },
     {
       name: 'status',
-      type: 'select',
+      type: 'text',
       required: true,
       label: 'Status',
-      admin: {
-        description: 'The current status of this location',
-      },
-      options: [
-        {
-          label: 'Active',
-          value: 'active',
-        },
-        {
-          label: 'Under Development',
-          value: 'under-development',
-        },
-        {
-          label: 'Closed',
-          value: 'closed',
-        },
-        {
-          label: 'Seasonal',
-          value: 'seasonal',
-        },
-      ],
-      defaultValue: 'active',
     },
     {
       name: 'contactInfo',

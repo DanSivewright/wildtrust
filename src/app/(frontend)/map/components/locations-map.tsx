@@ -1,6 +1,7 @@
 'use client'
 
-import type { Location } from '@/payload-types'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Label } from '@/components/ui/label'
 import {
   Sidebar,
   SidebarContent,
@@ -15,29 +16,19 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { Label } from '@/components/ui/label'
-import { FilterIcon, SearchIcon } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import useSupercluster from 'use-supercluster'
+import type { Location } from '@/payload-types'
 import MapboxDraw from '@mapbox/mapbox-gl-draw'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import * as turf from '@turf/turf'
+import { SearchIcon } from 'lucide-react'
 import type { FillLayer, LineLayer } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useQueryStates } from 'nuqs'
 import { PaginatedDocs } from 'payload'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import Map, { Layer, MapRef, Marker, Source, useMap } from 'react-map-gl/mapbox'
+import Map, { Layer, MapRef, Marker, Popup, Source, useMap } from 'react-map-gl/mapbox'
+import useSupercluster from 'use-supercluster'
 import { mapSearchParams } from '../nuqs/params'
-import { Badge } from '@/components/ui/badge'
 // Define GeoJSON types inline to avoid import issues
 type GeoJSONFeature = {
   type: 'Feature'
@@ -57,27 +48,6 @@ type Props = {
   locations: PaginatedDocs<Location>
 }
 
-const categories: Record<Location['category'] | 'all', string> = {
-  all: 'All Categories',
-  'marine-protected-area': 'Marine Protected Area',
-  'wildlife-sanctuary': 'Wildlife Sanctuary',
-  'conservation-area': 'Conservation Area',
-  'research-station': 'Research Station',
-  'tourist-attraction': 'Tourist Attraction',
-  'historical-site': 'Historical Site',
-  beach: 'Beach',
-  harbor: 'Harbor',
-  other: 'Other',
-}
-
-const statuses: Record<Location['status'] | 'all', string> = {
-  all: 'All Statuses',
-  active: 'Active',
-  'under-development': 'Under Development',
-  closed: 'Closed',
-  seasonal: 'Seasonal',
-}
-// Draw Control Component
 const DrawControl: React.FC = () => {
   const { current: map } = useMap()
   const [roundedArea, setRoundedArea] = useState<number | undefined>()
@@ -163,16 +133,41 @@ const DrawControl: React.FC = () => {
 const LocationsMap: React.FC<Props> = ({ locations }) => {
   const mapRef = useRef<MapRef>(null)
   const [defaultBounds, setDefaultBounds] = useState<number[] | null>(null)
-  const [{ markers, polygons, ...viewState }, setSearchParams] = useQueryStates(mapSearchParams)
+  const [hoveredLocationId, setHoveredLocationId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [{ markers, polygons, selectedLocationId, ...viewState }, setSearchParams] =
+    useQueryStates(mapSearchParams)
+
+  const selectedLocation =
+    locations?.docs?.find((location) => location.id === selectedLocationId) || null
+
+  // Filter locations based on search query
+  const filteredLocations = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return locations?.docs || []
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    return (
+      locations?.docs?.filter((location) => {
+        return (
+          location.title?.toLowerCase().includes(query) ||
+          location.locationName?.toLowerCase().includes(query) ||
+          location.description?.toLowerCase().includes(query) ||
+          location.authorisations?.toLowerCase().includes(query) ||
+          location.status?.toLowerCase().includes(query) ||
+          location.tags?.some((tag) => tag.tag?.toLowerCase().includes(query))
+        )
+      }) || []
+    )
+  }, [locations?.docs, searchQuery])
+  // const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
 
   // Create GeoJSON data for selected polygons
   const polygonGeoJSON = useMemo((): GeoJSONFeatureCollection => {
-    const selectedLocations = locations?.docs || []
-    // const selectedLocations =
-    //   locations?.docs?.filter(
-    //     (location) =>
-    //       polygons.includes(location.id) && location.polygon && location.polygon.length > 0,
-    //   ) || []
+    const selectedLocations = filteredLocations.filter(
+      (location) => location.polygon && location.polygon.length > 0,
+    )
 
     return {
       type: 'FeatureCollection',
@@ -190,7 +185,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
             id: location.id,
             title: location.title,
             locationName: location.locationName,
-            category: location.category,
+            authorisations: location.authorisations,
             status: location.status,
           },
           geometry: {
@@ -200,7 +195,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
         }
       }),
     }
-  }, [locations?.docs, polygons])
+  }, [filteredLocations])
 
   // Layer styles
   const fillLayer: FillLayer = {
@@ -210,17 +205,20 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
     paint: {
       'fill-color': [
         'case',
-        ['==', ['get', 'status'], 'active'],
-        '#10b981', // green for active
-        ['==', ['get', 'status'], 'under-development'],
-        '#f59e0b', // yellow for under development
-        ['==', ['get', 'status'], 'closed'],
-        '#ef4444', // red for closed
-        ['==', ['get', 'status'], 'seasonal'],
-        '#3b82f6', // blue for seasonal
+        ['==', ['get', 'id'], selectedLocation?.id || ''],
+        '#3b82f6', // blue for selected
+        ['==', ['get', 'id'], hoveredLocationId || ''],
+        '#8b5cf6', // purple for hovered
         '#6b7280', // gray for default
       ],
-      'fill-opacity': 0.3,
+      'fill-opacity': [
+        'case',
+        ['==', ['get', 'id'], selectedLocation?.id || ''],
+        0.6, // higher opacity for selected
+        ['==', ['get', 'id'], hoveredLocationId || ''],
+        0.5, // medium opacity for hovered
+        0.3, // default opacity
+      ],
     },
   }
 
@@ -231,22 +229,25 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
     paint: {
       'line-color': [
         'case',
-        ['==', ['get', 'status'], 'active'],
-        '#10b981',
-        ['==', ['get', 'status'], 'under-development'],
-        '#f59e0b',
-        ['==', ['get', 'status'], 'closed'],
-        '#ef4444',
-        ['==', ['get', 'status'], 'seasonal'],
-        '#3b82f6',
-        '#6b7280',
+        ['==', ['get', 'id'], selectedLocation?.id || ''],
+        '#3b82f6', // blue for selected
+        ['==', ['get', 'id'], hoveredLocationId || ''],
+        '#8b5cf6', // purple for hovered
+        '#6b7280', // gray for default
       ],
-      'line-width': 2,
+      'line-width': [
+        'case',
+        ['==', ['get', 'id'], selectedLocation?.id || ''],
+        3, // thicker line for selected
+        ['==', ['get', 'id'], hoveredLocationId || ''],
+        2.5, // medium line for hovered
+        2, // default line width
+      ],
       'line-opacity': 0.8,
     },
   }
 
-  const points = locations?.docs?.map((location) => ({
+  const points = filteredLocations.map((location) => ({
     type: 'Feature' as const,
     properties: {
       ...location,
@@ -304,11 +305,13 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                 id="search"
                 placeholder="Search for a location..."
                 className="pl-8 h-14 rounded-2xl ring-1 ring-foreground/10 shadow-lg shadow-foreground/5"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <SearchIcon className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
             </SidebarGroupContent>
           </SidebarGroup>
-          <SidebarGroup className="p-0 mt-4">
+          {/* <SidebarGroup className="p-0 mt-4">
             <div className="flex items-center flex-wrap flex-1 gap-2">
               <div className="flex flex-col grow gap-2">
                 <Label className="text-xs font-light">Show me:</Label>
@@ -400,15 +403,27 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                 More Filters
               </Button>
             </div>
-          </SidebarGroup>
+          </SidebarGroup> */}
         </SidebarHeader>
         <SidebarContent>
           {/* We create a SidebarGroup for each parent. */}
           <SidebarGroup>
-            <SidebarGroupLabel>Locations</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              Locations
+              {searchQuery && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({filteredLocations.length} results)
+                </span>
+              )}
+              {!searchQuery && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({filteredLocations.length})
+                </span>
+              )}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {locations?.docs?.map((location) => (
+                {filteredLocations.map((location) => (
                   <SidebarMenuItem className="h-fit" key={location.id}>
                     <SidebarMenuButton
                       asChild
@@ -418,23 +433,26 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                         onClick={() => {
                           mapRef.current?.flyTo({
                             center: [location.coordinates.longitude, location.coordinates.latitude],
-                            zoom: 10,
+                            zoom: 5,
                           })
+                          setSearchParams({ selectedLocationId: location.id })
                         }}
                         className="flex items-center gap-3 h-fit "
                       >
                         <Avatar>
-                          <AvatarFallback className="bg-blue-600">DS</AvatarFallback>
+                          <AvatarFallback className="bg-blue-600">
+                            {location.locationName.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <p className="text-sm font-normal">{location.title}</p>
+                          <p className="text-sm font-normal">{location.locationName}</p>
                           <div className="flex items-center gap-2">
-                            <p className="text-xs text-muted-foreground">
-                              {statuses[location.status]}
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {location.status}
                             </p>
                             <div className="w-px bg-muted-foreground h-3 rotate-12"></div>
-                            <p className="text-xs text-muted-foreground">
-                              {categories[location.category]}
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {location.locationName}
                             </p>
                           </div>
                         </div>
@@ -470,11 +488,46 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                 },
               )
             }}
+            onClick={(e) => {
+              // Check if click was on a polygon layer
+              const features = e.target.queryRenderedFeatures(e.point, {
+                layers: ['polygon-fill'],
+              })
+
+              if (features.length > 0) {
+                // Clicked on a polygon
+                const locationId = features[0].properties?.id
+                if (locationId) {
+                  setSearchParams({ selectedLocationId: locationId })
+                }
+              } else {
+                // Clicked on empty map area
+                setSearchParams({ selectedLocationId: '' })
+              }
+            }}
+            onMouseMove={(e) => {
+              const features = e.target.queryRenderedFeatures(e.point, {
+                layers: ['polygon-fill'],
+              })
+
+              if (features.length > 0) {
+                const locationId = features[0].properties?.id
+                setHoveredLocationId(locationId || null)
+                e.target.getCanvas().style.cursor = 'pointer'
+              } else {
+                setHoveredLocationId(null)
+                e.target.getCanvas().style.cursor = ''
+              }
+            }}
+            onMouseLeave={() => {
+              setHoveredLocationId(null)
+            }}
             maxZoom={20}
             style={{ width: '100%', height: '100%' }}
             mapStyle="mapbox://styles/mapbox/streets-v9"
             ref={mapRef}
           >
+            {/* <DrawControl /> */}
             {polygonGeoJSON.features.length > 0 && (
               <Source id="polygons" type="geojson" data={polygonGeoJSON}>
                 <Layer {...fillLayer} />
@@ -509,7 +562,7 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                           zoom: expansionZoom,
                         })
                       }}
-                      className="bg-background px-3 py-1 rounded-full"
+                      className="bg-foreground px-3 py-1 rounded-full"
                     >
                       {pointCount}: Locations
                     </button>
@@ -523,12 +576,60 @@ const LocationsMap: React.FC<Props> = ({ locations }) => {
                   longitude={longitude}
                   anchor="right"
                 >
-                  <button className="bg-background px-3 py-1 rounded-full">
+                  <button
+                    className="bg-primary px-3 py-1 rounded-full hover:bg-primary/80 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSearchParams({ selectedLocationId: cluster.properties.id })
+                    }}
+                  >
                     {cluster.properties.title}
                   </button>
                 </Marker>
               )
             })}
+
+            {/* Popup for selected location */}
+            {selectedLocation && (
+              <Popup
+                latitude={selectedLocation.coordinates.latitude}
+                longitude={selectedLocation.coordinates.longitude}
+                anchor="bottom"
+                onClose={() => setSearchParams({ selectedLocationId: '' })}
+                closeButton={true}
+                closeOnClick={false}
+                // className="max-w-sm"
+              >
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {selectedLocation.locationName}
+                  </h3>
+                  {selectedLocation.locationName && (
+                    <p className="text-sm text-gray-600 mb-2">
+                      <strong>Applicant:</strong> {selectedLocation.locationName}
+                    </p>
+                  )}
+                  {selectedLocation.locationName && (
+                    <p className="text-sm text-gray-600 mb-2">
+                      <strong>Authorisations:</strong> {selectedLocation.authorisations}
+                    </p>
+                  )}
+                  {selectedLocation.locationName && (
+                    <p className="text-sm text-gray-600 mb-2">
+                      <strong>Status:</strong> {selectedLocation.status}
+                    </p>
+                  )}
+
+                  {/* {selectedLocation.description && (
+                    <p className="text-sm text-gray-700 mb-3">{selectedLocation.description}</p>
+                  )}
+                  <div className="text-xs text-gray-500">
+                    <p>Lat: {selectedLocation.coordinates.latitude.toFixed(6)}</p>
+                    <p>Lng: {selectedLocation.coordinates.longitude.toFixed(6)}</p>
+                  </div> */}
+                </div>
+              </Popup>
+            )}
           </Map>
         </div>
       </SidebarInset>

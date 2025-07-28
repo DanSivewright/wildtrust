@@ -767,23 +767,8 @@ export interface Location {
      */
     longitude: number;
   };
-  /**
-   * The type of location this represents
-   */
-  category:
-    | 'marine-protected-area'
-    | 'wildlife-sanctuary'
-    | 'conservation-area'
-    | 'research-station'
-    | 'tourist-attraction'
-    | 'historical-site'
-    | 'beach'
-    | 'harbor'
-    | 'other';
-  /**
-   * The current status of this location
-   */
-  status: 'active' | 'under-development' | 'closed' | 'seasonal';
+  authorisations: string;
+  status: string;
   /**
    * Optional contact information for this location
    */
@@ -1421,7 +1406,7 @@ export interface LocationsSelect<T extends boolean = true> {
         latitude?: T;
         longitude?: T;
       };
-  category?: T;
+  authorisations?: T;
   status?: T;
   contactInfo?:
     | T

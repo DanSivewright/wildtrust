@@ -5,5 +5,6 @@ export const mapSearchParams = {
   longitude: parseAsFloat.withDefault(24.7499),
   latitude: parseAsFloat.withDefault(-28.7282),
   zoom: parseAsFloat.withDefault(5),
+  selectedLocationId: parseAsString.withDefault(''),
 }
 export const loadMapSearchParams = createSearchParamsCache(mapSearchParams)
